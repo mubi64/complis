@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:Complis-site-{YYYY}-{#####}.",
+ "creation": "2023-03-02 11:01:21.617456",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "site_name",
+  "complis_site_url",
+  "key",
+  "default_customer",
+  "warehouse",
+  "cost_center",
+  "receivable_account",
+  "column_break_8",
+  "synced_till",
+  "sales_tax_template",
+  "sync_status",
+  "sync_invoices"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "label": "Site Name"
+  },
+  {
+   "fieldname": "complis_site_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Site Url",
+   "length": 500,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "default_customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Default Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "receivable_account",
+   "fieldtype": "Link",
+   "label": "Receivable Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "synced_till",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Synced till",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sales_tax_template",
+   "fieldtype": "Link",
+   "label": "Sales Tax Template",
+   "options": "Sales Taxes and Charges Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sync_status",
+   "fieldtype": "Long Text",
+   "label": "Sync Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "key",
+   "fieldtype": "Data",
+   "label": "Secret Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sync_invoices",
+   "fieldtype": "Button",
+   "label": "Sync Invoices"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-03-02 11:54:45.880166",
+ "modified_by": "Administrator",
+ "module": "Complis",
+ "name": "Complis Site",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
