@@ -7,6 +7,21 @@ app_description = "SowaanERP integration with complis"
 app_email = "info@sowaan.com"
 app_license = "MIT"
 
+fixtures = [
+    {
+		"doctype":"Custom Field",
+		"filters":[
+			[
+				"fieldname",
+                "in",
+				(
+					"complis_customer_id", "complis_invoice_number", "complis_record_id", "complis_item_code"
+				)
+			]
+		]
+	}, 
+]
+
 # Includes in <head>
 # ------------------
 
@@ -158,26 +173,26 @@ app_license = "MIT"
 # User Data Protection
 # --------------------
 
-# user_data_fields = [
-#	{
-#		"doctype": "{doctype_1}",
-#		"filter_by": "{filter_by}",
-#		"redact_fields": ["{field_1}", "{field_2}"],
-#		"partial": 1,
-#	},
-#	{
-#		"doctype": "{doctype_2}",
-#		"filter_by": "{filter_by}",
-#		"partial": 1,
-#	},
-#	{
-#		"doctype": "{doctype_3}",
-#		"strict": False,
-#	},
-#	{
-#		"doctype": "{doctype_4}"
-#	}
-# ]
+user_data_fields = [
+	{
+		"doctype": "{doctype_1}",
+		"filter_by": "{filter_by}",
+		"redact_fields": ["{field_1}", "{field_2}"],
+		"partial": 1,
+	},
+	{
+		"doctype": "{doctype_2}",
+		"filter_by": "{filter_by}",
+		"partial": 1,
+	},
+	{
+		"doctype": "{doctype_3}",
+		"strict": False,
+	},
+	{
+		"doctype": "{doctype_4}"
+	}
+]
 
 # Authentication and authorization
 # --------------------------------
