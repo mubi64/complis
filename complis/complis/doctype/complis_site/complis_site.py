@@ -34,9 +34,6 @@ def sync_invoice_for_single_site(site, doc):
 
 def get_invoices_from_complis(site, doc):
     dt = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-    # headers = {
-    # 	"Authorization": "Bearer "+doc.access_token
-    # }
     print(dt, "datetime")
     # dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -51,7 +48,6 @@ def get_invoices_from_complis(site, doc):
 
     # while(1==1):
     try:
-        # r = requests.post(site.complis_site_url+"/api/v2/desk/invoices?per_page=100&state=closed&created_since="+str(sync_from)).json()
         r = requests.post(site.complis_site_url, json=data).json()
     except requests.exceptions.HTTPError:
         button_label = frappe.bold(_("Get Access Token"))
@@ -76,9 +72,6 @@ def get_invoices_from_complis(site, doc):
 
 def insert_invoices_from_complis(invoices, doc, site):
     print(doc, "invoice_no")
-    # headers = {
-    # 	"Authorization": "Bearer "+doc.access_token
-    # }
     curr_invoice = {}
     for x in invoices:
         erp_invoices = frappe.get_all("Sales Invoice", filters={
@@ -86,16 +79,6 @@ def insert_invoices_from_complis(invoices, doc, site):
         })
         # if length is more than 0 then this invoice is already synced with erp
         if (len(erp_invoices) == 0):
-            # try:
-            #     r = requests.get(
-            #         site.complis_site_url).json()
-            # except requests.exceptions.HTTPError:
-            #     button_label = frappe.bold(_("Get Access Token"))
-            #     frappe.throw(
-            #         _(
-            #             "Something went wrong during the people sync. Click on {0} to generate a new one."
-            #         ).format(button_label)
-            #     )
             curr_invoice = x
 
             erp_customer = site.default_customer
@@ -159,8 +142,8 @@ def insert_invoices_from_complis(invoices, doc, site):
                     erp_item = db_items[0]
                     discount = 0
                     rate = float(i.get("item_price"))
-                    if i.get("item_tax") is not None:
-                        rate = rate + float(i.get("item_tax"))
+                    # if i.get("item_qty") is not None:
+                    #     rate = rate * float(i.get("item_qty"))
                     # for dis in i.get("adjustments"):
                     # 	if dis.get("type") == "Discount":
                     # 		discount += dis.get("amount_cents")
@@ -169,7 +152,7 @@ def insert_invoices_from_complis(invoices, doc, site):
                     # print(str(round(discount/100,2)))
                     si.append("items", {
                         "item_code": erp_item.name,
-                        "rate": round(rate/100, 2),
+                        "rate": round(rate, 2),
                         "qty": 1
                     })
 
@@ -187,10 +170,10 @@ def insert_invoices_from_complis(invoices, doc, site):
     #         # si.posting_date = curr_invoice.get("invoice_date")
     #         # si.save()
 
-    # if curr_invoice:
-    #     site.synced_till = curr_invoice.get("invoice_date")
-    #     site.save()
-    #     frappe.db.commit()
+    if curr_invoice:
+        site.synced_till = curr_invoice.get("invoice_date")
+        site.save()
+        frappe.db.commit()
     return curr_invoice
 
 
@@ -199,27 +182,13 @@ def get_erp_customer(id, doc, site, invoices):
         "complis_customer_id": id
     })
     if (len(erp_customer) == 0):
-        # customer is not present in erp, insert it
-        # headers = {
-        # 	"Authorization": "Bearer "+doc.access_token
-        # }
-        # try:
-        #     r = requests.get(site.complis_site_url +
-        #                      "/api/v2/desk/people/"+str(id)).json()
-        # except requests.exceptions.HTTPError:
-        #     frappe.throw(
-        #         _(
-        #             "Something went wrong during the customer sync from complis."
-        #         )
-        #     )
-
-        # people = r.get("people")[0]
         invoice = invoices[0]
         customer = frappe.get_doc(
             {
                 "doctype": "Customer",
                 "complis_customer_id": invoice.get("customer_code"),
                 "customer_name": invoice.get("customer_name_en"),
+                "customer_name_in_arabic": invoice.get("customer_name_ar"),
                 "customer_group": "All Customer Groups",
                 "territory": "All Territories",
                 # "address_line1": people.get("address")
@@ -236,7 +205,7 @@ def get_erp_items(items, doc, site):
     erp_items = []
     for x in items:
         item_detail = x.get("item_desc_en")
-        product_id = x.get("sr_no")
+        product_id = x.get("item_desc_en")
         items_in_db = frappe.get_all("Item",
                                      filters={
                                          "complis_item_code": product_id
@@ -251,7 +220,7 @@ def get_erp_items(items, doc, site):
                     {
                         "doctype": "Item",
                         "item_code": x.get("item_brand_en"),
-                        "complis_item_code": x.get("sr_no"),
+                        "complis_item_code": x.get("item_desc_en"),
                         "item_name": x.get("item_brand_en"),
                         "item_group": "All Item Groups",
                         "stock_uom": "Nos",
@@ -261,7 +230,7 @@ def get_erp_items(items, doc, site):
                 ).insert(ignore_permissions=True)
             else:
                 item = frappe.get_doc("Item", x.get("item_brand_en"))
-                item.complis_item_code = x.get("sr_no")
+                item.complis_item_code = x.get("item_desc_en")
                 item.save()
 
             erp_items.append({
