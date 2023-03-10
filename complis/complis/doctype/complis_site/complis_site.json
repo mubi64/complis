@@ -11,13 +11,14 @@
   "enabled",
   "site_name",
   "complis_site_url",
-  "key",
+  "secret_key",
   "default_customer",
   "warehouse",
   "cost_center",
   "receivable_account",
   "column_break_8",
   "synced_till",
+  "sales_return_series",
   "sales_tax_template",
   "sync_status",
   "sync_invoices"
@@ -96,20 +97,31 @@
    "read_only": 1
   },
   {
-   "fieldname": "key",
+   "fieldname": "sync_invoices",
+   "fieldtype": "Button",
+   "label": "Sync Invoices"
+  },
+  {
+   "fieldname": "secret_key",
    "fieldtype": "Data",
    "label": "Secret Key",
    "reqd": 1
   },
   {
-   "fieldname": "sync_invoices",
-   "fieldtype": "Button",
-   "label": "Sync Invoices"
+   "bold": 1,
+   "fieldname": "sales_return_series",
+   "fieldtype": "Select",
+   "label": "Sales Return Series",
+   "no_copy": 1,
+   "options": "ACC-SINV-.YYYY.-\nACC-SINV-RET-.YYYY.-",
+   "print_hide": 1,
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-03-02 11:54:45.880166",
+ "modified": "2023-03-08 16:20:09.490495",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",

@@ -7,6 +7,8 @@ import requests
 from frappe.utils import now, add_to_date
 from frappe.model.document import Document
 import datetime
+import hashlib
+import hmac
 
 
 class ComplisSite(Document):
@@ -23,30 +25,36 @@ def sync_invoices(doc):
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x)
-        sync_invoice_for_single_site(site, doc)
+        sync_invoice_for_single_site(site)
 
     return "Success"
 
 
-def sync_invoice_for_single_site(site, doc):
-    get_invoices_from_complis(site, doc)
+def sync_invoice_for_single_site(site):
+    get_invoices_from_complis(site)
 
 
-def get_invoices_from_complis(site, doc):
+def get_invoices_from_complis(site):
     dt = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-    print(dt, "datetime")
-    # dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    fromdate = dt.strftime("%Y-%-m-%-dT%H:%M:%S.%f")[:-3] + 'Z'
+    secret = site.secret_key
+    myEncoder = 'utf-8'
+    Key = str(fromdate).encode(myEncoder)
+    Text = str(secret).encode(myEncoder)
 
+    myHMACSHA256 = hmac.new(Key, Text, hashlib.sha256)
+    HashCode = myHMACSHA256.digest()
+    hash = ''.join('{:02x}'.format(b) for b in HashCode)
+    calculatedSecret = hash.upper()
     data = {
-        "date_from": "2021-6-21T01:01:01.511Z",
-        "date_to": "2021-6-22T01:01:01.511Z", #str(datetime.datetime.now().strftime("%Y-%-m-%-dT%H:%M:%S.%fZ")),
-        "key": site.key
+        "date_from": str(fromdate),
+        "date_to": str(datetime.datetime.now().strftime("%Y-%-m-%-dT%H:%M:%S.%f")[:-3] + 'Z'),
+        "key": calculatedSecret
     }
-    print(dt.strftime('%Y-%-m-%-dT%H:%M:%S.%f')[:-3]+'Z', "data")
 
     # sync_from = site.synced_till
 
-    # while(1==1):
+    # while (1 == 1):
     try:
         r = requests.post(site.complis_site_url, json=data).json()
     except requests.exceptions.HTTPError:
@@ -57,21 +65,21 @@ def get_invoices_from_complis(site, doc):
             ).format(button_label)
         )
     invoices = r.get("data")
-    last_invoice = insert_invoices_from_complis(invoices, doc, site)
-    sync_from = last_invoice.get("invoice_date")
+    last_invoice = insert_invoices_from_complis(invoices, site)
+    # sync_from = last_invoice.get("invoice_date")
 
     # if r.get("next") is None:
     #     break
 
     frappe.msgprint(
-    	msg= _(
-    		"<b style='color:green'>"+site.complis_site_url+"</b>: Invoices synced successfully!"
-    	)
+        msg=_(
+            "<b style='color:green'>"+site.complis_site_url +
+            "</b>: Invoices synced successfully!"
+        )
     )
 
 
-def insert_invoices_from_complis(invoices, doc, site):
-    print(doc, "invoice_no")
+def insert_invoices_from_complis(invoices, site):
     curr_invoice = {}
     for x in invoices:
         erp_invoices = frappe.get_all("Sales Invoice", filters={
@@ -85,14 +93,15 @@ def insert_invoices_from_complis(invoices, doc, site):
             erp_items = None
 
             # check customer from erp
-            if (curr_invoice.get("customer_code") is not None):
-                customer = curr_invoice.get("customer_code")
-                erp_customer = get_erp_customer(customer, doc, site, invoices)
+            if (curr_invoice.get("customer_name_en") is not None):
+                customer_name = curr_invoice.get("customer_name_en")
+                erp_customer = get_erp_customer(
+                    customer_name, site, curr_invoice)
 
             # check items from erp
-            if (curr_invoice.get("Item_List") is not None):
+            if (len(curr_invoice.get("Item_List")) > 0):
                 items = curr_invoice.get("Item_List")
-                erp_items = get_erp_items(items, doc, site)
+                erp_items = get_erp_items(items, site)
 
             sales_tax_template = site.sales_tax_template
             # if tax template is not defined in the complis settings then use default one
@@ -104,7 +113,6 @@ def insert_invoices_from_complis(invoices, doc, site):
                                                        )
                 if (len(default_tax_templates) > 0):
                     sales_tax_template = default_tax_templates[0].name
-            print(site.cost_center, "sales_tax_template")
             si = frappe.new_doc("Sales Invoice")
             si.customer = erp_customer
             si.set_posting_time = 1
@@ -133,10 +141,10 @@ def insert_invoices_from_complis(invoices, doc, site):
             # 				"amount": i.get("amount_cents")/100
             # 			})
             # 			break
-
+            rate = 0
             for i in curr_invoice.get("Item_List"):
                 db_items = frappe.get_all("Item", filters={
-                    "name": i.get("item_brand_en")
+                    "name": i.get("item_desc_en").strip()
                 })
                 if (len(db_items) > 0):
                     erp_item = db_items[0]
@@ -153,14 +161,16 @@ def insert_invoices_from_complis(invoices, doc, site):
                     si.append("items", {
                         "item_code": erp_item.name,
                         "rate": round(rate, 2),
-                        "qty": 1
+                        "qty": i.get("item_qty")
                     })
+                    rate += rate
 
+            if rate < 0:
+                si.is_return = 1
+                si.naming_series = site.sales_return_series
             si.set_missing_values()
-
     #         print(str(x.get("id"))+":" +
     #               curr_invoice.get("invoice_date")+":"+str(erp_customer))
-
             si.insert(ignore_permissions=True)
 
     #         # this below code is to submit the invoice,
@@ -177,18 +187,17 @@ def insert_invoices_from_complis(invoices, doc, site):
     return curr_invoice
 
 
-def get_erp_customer(id, doc, site, invoices):
+def get_erp_customer(customer_name, site, curr_invoice):
     erp_customer = frappe.get_all("Customer", filters={
-        "complis_customer_id": id
+        "customer_name": customer_name
     })
     if (len(erp_customer) == 0):
-        invoice = invoices[0]
         customer = frappe.get_doc(
             {
                 "doctype": "Customer",
-                "complis_customer_id": invoice.get("customer_code"),
-                "customer_name": invoice.get("customer_name_en"),
-                "customer_name_in_arabic": invoice.get("customer_name_ar"),
+                "complis_customer_id": curr_invoice.get("customer_name_en"),
+                "customer_name": curr_invoice.get("customer_name_en"),
+                "customer_name_in_arabic": curr_invoice.get("customer_name_ar"),
                 "customer_group": "All Customer Groups",
                 "territory": "All Territories",
                 # "address_line1": people.get("address")
@@ -201,10 +210,9 @@ def get_erp_customer(id, doc, site, invoices):
     return erp_customer[0].name
 
 
-def get_erp_items(items, doc, site):
+def get_erp_items(items, site):
     erp_items = []
     for x in items:
-        item_detail = x.get("item_desc_en")
         product_id = x.get("item_desc_en")
         items_in_db = frappe.get_all("Item",
                                      filters={
@@ -215,13 +223,13 @@ def get_erp_items(items, doc, site):
         if (len(items_in_db) == 0):
             # item is not present in erp by complis code, lets try with item name
             item = None
-            if (not frappe.db.exists("Item", {"name": x.get("item_brand_en")})):
+            if (not frappe.db.exists("Item", {"name": x.get("item_desc_en")})):
                 item = frappe.get_doc(
                     {
                         "doctype": "Item",
-                        "item_code": x.get("item_brand_en"),
+                        "item_code": x.get("item_desc_en"),
                         "complis_item_code": x.get("item_desc_en"),
-                        "item_name": x.get("item_brand_en"),
+                        "item_name": x.get("item_desc_en"),
                         "item_group": "All Item Groups",
                         "stock_uom": "Nos",
                         "is_stock_item": 1,
@@ -229,8 +237,9 @@ def get_erp_items(items, doc, site):
                     }
                 ).insert(ignore_permissions=True)
             else:
-                item = frappe.get_doc("Item", x.get("item_brand_en"))
-                item.complis_item_code = x.get("item_desc_en")
+                item = frappe.get_doc("Item", x.get("item_desc_en"))
+                if (item.complis_item_code == None):
+                    item.complis_item_code = x.get("item_desc_en")
                 item.save()
 
             erp_items.append({
