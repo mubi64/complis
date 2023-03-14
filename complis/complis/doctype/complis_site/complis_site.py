@@ -16,7 +16,7 @@ class ComplisSite(Document):
 
 
 @frappe.whitelist()
-def sync_invoices(doc):
+def sync_invoices():
     complis_sites = frappe.get_all("Complis Site", filters={"enabled": 1})
     if (len(complis_sites) == 0):
         frappe.throw(
