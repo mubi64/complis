@@ -20,7 +20,7 @@ def sync_invoices():
     complis_sites = frappe.get_all("Complis Site", filters={"enabled": 1})
     if (len(complis_sites) == 0):
         frappe.throw(
-            _("Pike13 sites not found. Please make atleast one complis site and try again")
+            _("Complis sites not found. Please make atleast one complis site and try again")
         )
 
     for x in complis_sites:
@@ -52,6 +52,8 @@ def get_invoices_from_complis(site):
         "key": calculatedSecret
     }
 
+    print(data, "My data List")
+
     # sync_from = site.synced_till
 
     # while (1 == 1):
@@ -64,8 +66,31 @@ def get_invoices_from_complis(site):
                 "Something went wrong during the people sync. Click on {0} to generate a new one."
             ).format(button_label)
         )
+
     invoices = r.get("data")
-    last_invoice = insert_invoices_from_complis(invoices, site)
+    itrableInvoices = {}
+    for invoice in invoices:
+        invoice_no = invoice['invoice_no']
+        items = invoice['Item_List']
+        if any(item['item_qty'] == 0 for item in items):
+            continue
+            # invoices.remove(invoice)
+        # for item in items:
+        #     if item.get('item_qty') == 0:
+        #         # # print(item.item_qty, "Item QTY Print")
+        #         # if (len(items) > 0):
+        #         #     items.remove(item)
+        #         # else:
+        #         invoices.remove(invoice)
+
+        if invoice_no in itrableInvoices:
+            itrableInvoices[invoice_no]['Item_List'].extend(items)
+        else:
+            itrableInvoices[invoice_no] = invoice
+
+    result = list(itrableInvoices.values())
+    # print(invoices, "Check Invoices")
+    last_invoice = insert_invoices_from_complis(result, site)
     # sync_from = last_invoice.get("invoice_date")
 
     # if r.get("next") is None:
@@ -85,6 +110,7 @@ def insert_invoices_from_complis(invoices, site):
         erp_invoices = frappe.get_all("Sales Invoice", filters={
             "complis_record_id": x.get("invoice_no")
         })
+        print(x.get("invoice_no"), "Invoice No Print")
         # if length is more than 0 then this invoice is already synced with erp
         if (len(erp_invoices) == 0):
             curr_invoice = x
