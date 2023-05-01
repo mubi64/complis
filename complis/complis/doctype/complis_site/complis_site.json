@@ -3,7 +3,6 @@
  "allow_rename": 1,
  "autoname": "format:Complis-site-{YYYY}-{#####}.",
  "creation": "2023-03-02 11:01:21.617456",
- "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -110,10 +109,9 @@
   {
    "bold": 1,
    "fieldname": "sales_return_series",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Sales Return Series",
    "no_copy": 1,
-   "options": "ACC-SINV-.YYYY.-\nACC-SINV-RET-.YYYY.-",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -121,11 +119,10 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-03-08 16:20:09.490495",
+ "modified": "2023-05-01 10:11:51.279407",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",
- "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -143,6 +140,5 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "track_changes": 1
 }

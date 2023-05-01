@@ -186,7 +186,7 @@ def insert_invoices_from_complis(invoices, site):
                     # print(str(round(discount/100,2)))
                     si.append("items", {
                         "item_code": erp_item.name,
-                        "rate": round(rate, 2),
+                        "rate": round(rate, 2) / int(i.get("item_qty")),
                         "qty": i.get("item_qty")
                     })
                     rate += rate
