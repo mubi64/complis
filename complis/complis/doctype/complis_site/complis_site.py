@@ -142,7 +142,7 @@ def insert_invoices_from_complis(invoices, site):
             si.customer = erp_customer
             si.set_posting_time = 1
             si.posting_date = curr_invoice.get("invoice_date")
-            si.due_date = curr_invoice.get("invoice_date")
+            si.due_date = curr_invoice.get("invoice_due")
             si.complis_record_id = curr_invoice.get("invoice_no")
             si.complis_invoice_number = curr_invoice.get("invoice_no")
             si.taxes_and_charges = sales_tax_template
