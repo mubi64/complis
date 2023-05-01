@@ -89,7 +89,6 @@ def get_invoices_from_complis(site):
             itrableInvoices[invoice_no] = invoice
 
     result = list(itrableInvoices.values())
-    # print(invoices, "Check Invoices")
     last_invoice = insert_invoices_from_complis(result, site)
     # sync_from = last_invoice.get("invoice_date")
 
@@ -158,18 +157,6 @@ def insert_invoices_from_complis(invoices, site):
             if site.cost_center:
                 si.cost_center = site.cost_center
 
-            # for i in curr_invoice.get("payments"):
-            # 	si.is_pos = 1
-            # 	method_name = i.get("description")
-            # 	for j in site.complis_to_erp_mode_of_payment_mapping:
-            # 		if method_name == j.complis_mode_of_payment:
-            # 			print("*********payment amount************")
-            # 			print(i.get("amount"))
-            # 			si.append("payments", {
-            # 				"mode_of_payment": j.erp_mode_of_payment,
-            # 				"amount": i.get("amount_cents")/100
-            # 			})
-            # 			break
             rate = 0
             for i in curr_invoice.get("Item_List"):
                 db_items = frappe.get_all("Item", filters={
@@ -179,14 +166,6 @@ def insert_invoices_from_complis(invoices, site):
                     erp_item = db_items[0]
                     discount = 0
                     rate = float(i.get("item_price"))
-                    # if i.get("item_qty") is not None:
-                    #     rate = rate * float(i.get("item_qty"))
-                    # for dis in i.get("adjustments"):
-                    # 	if dis.get("type") == "Discount":
-                    # 		discount += dis.get("amount_cents")
-
-                    # print('******DISCOUNT*******')
-                    # print(str(round(discount/100,2)))
                     si.append("items", {
                         "item_code": erp_item.name,
                         "rate": round(rate, 2) / int(i.get("item_qty")),
@@ -200,16 +179,14 @@ def insert_invoices_from_complis(invoices, site):
             else:
                 si.naming_series = site.sales_invoice_series
             si.set_missing_values()
-    #         print(str(x.get("id"))+":" +
-    #               curr_invoice.get("invoice_date")+":"+str(erp_customer))
             si.insert(ignore_permissions=True)
 
-    #         # this below code is to submit the invoice,
-    #         # we will do once the integration would be stable
+            # this below code is to submit the invoice,
+            # we will do once the integration would be stable
 
-    #         # si.docstatus = 1
-    #         # si.posting_date = curr_invoice.get("invoice_date")
-    #         # si.save()
+            # si.docstatus = 1
+            # si.posting_date = curr_invoice.get("invoice_date")
+            # si.save()
 
     if curr_invoice:
         site.synced_till = curr_invoice.get("invoice_date")
