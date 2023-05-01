@@ -18,6 +18,7 @@
   "column_break_8",
   "synced_till",
   "sales_return_series",
+  "sales_invoice_series",
   "company",
   "sales_tax_template",
   "sync_status",
@@ -122,11 +123,20 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company"
+  },
+  {
+   "fieldname": "sales_invoice_series",
+   "fieldtype": "Data",
+   "label": "Sales Invoice Series",
+   "no_copy": 1,
+   "print_hide": 1,
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-01 10:43:38.739805",
+ "modified": "2023-05-01 12:18:15.187917",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",

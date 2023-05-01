@@ -151,11 +151,11 @@ def insert_invoices_from_complis(invoices, site):
             si.update_stock = 0
             si.set_warehouse = site.warehouse
 
-            if site.company != None:
+            if site.company:
                 si.company = site.company
 
             # link cost center to invoice if provided in complis site configuration
-            if site.cost_center != None:
+            if site.cost_center:
                 si.cost_center = site.cost_center
 
             # for i in curr_invoice.get("payments"):
@@ -197,6 +197,8 @@ def insert_invoices_from_complis(invoices, site):
             if rate < 0:
                 si.is_return = 1
                 si.naming_series = site.sales_return_series
+            else:
+                si.naming_series = site.sales_invoice_series
             si.set_missing_values()
     #         print(str(x.get("id"))+":" +
     #               curr_invoice.get("invoice_date")+":"+str(erp_customer))
