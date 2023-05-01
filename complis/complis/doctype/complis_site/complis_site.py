@@ -151,8 +151,11 @@ def insert_invoices_from_complis(invoices, site):
             si.update_stock = 0
             si.set_warehouse = site.warehouse
 
+            if site.company != None:
+                si.company = site.company
+
             # link cost center to invoice if provided in complis site configuration
-            if site.cost_center is not None:
+            if site.cost_center != None:
                 si.cost_center = site.cost_center
 
             # for i in curr_invoice.get("payments"):
