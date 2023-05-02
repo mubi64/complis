@@ -123,6 +123,10 @@ def insert_invoices_from_complis(invoices, site):
                 erp_customer = get_erp_customer(
                     customer_name, site, curr_invoice)
 
+            if curr_invoice.get("customer_address_en"):
+                address_name = curr_invoice.get("invoice_no")
+                customer_name = curr_invoice.get("customer_name_en")
+                erp_address = get_erp_address(address_name, customer_name, curr_invoice)
             # check items from erp
             if (len(curr_invoice.get("Item_List")) > 0):
                 items = curr_invoice.get("Item_List")
@@ -194,6 +198,41 @@ def insert_invoices_from_complis(invoices, site):
         frappe.db.commit()
     return curr_invoice
 
+
+def get_erp_address(address_name, customer_name, curr_invoice):
+    erp_address = frappe.get_all("Address", filters={
+        "address_title": address_name
+    })
+    if (len(erp_address) == 0):
+        address = frappe.get_doc(
+            {
+                "doctype": "Address",
+                "address_title": address_name,
+                "address_line1": curr_invoice.get("agent_street_name_en"),
+                "address_line2": curr_invoice.get("agent_building_no_en"),
+                # "address_in_arabic": curr_invoice.get("customer_address_ar"),
+                "country": curr_invoice.get("customer_country_en"),
+                "pincode": curr_invoice.get("customer_postal_code_en"),
+                "phone": curr_invoice.get("customer_contact_no_en"),
+            }
+        )
+
+        if curr_invoice.get("customer_city_en") != "":
+            address.city = curr_invoice.get("customer_city_en")
+        else:
+            address.city = "--"
+        
+        address.append("links", {
+            'link_doctype': "Customer",
+            'link_name': customer_name,
+            'link_title': customer_name
+        })
+        address.insert(ignore_permissions=True)
+
+        frappe.db.commit()
+        return address.name
+
+    return erp_address[0].name
 
 def get_erp_customer(customer_name, site, curr_invoice):
     erp_customer = frappe.get_all("Customer", filters={
