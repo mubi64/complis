@@ -200,37 +200,41 @@ def insert_invoices_from_complis(invoices, site):
 
 
 def get_erp_address(address_name, customer_name, curr_invoice):
+    # erp_address = frappe.db.sql(""" SELECT name, links FROM `tabAddress` """)
     erp_address = frappe.get_all("Address", filters={
-        "address_title": address_name
+        "pincode": curr_invoice.get("customer_postal_code_en"),
     })
-    if (len(erp_address) == 0):
-        address = frappe.get_doc(
-            {
-                "doctype": "Address",
-                "address_title": address_name,
-                "address_line1": curr_invoice.get("agent_street_name_en"),
-                "address_line2": curr_invoice.get("agent_building_no_en"),
-                # "address_in_arabic": curr_invoice.get("customer_address_ar"),
-                "country": curr_invoice.get("customer_country_en"),
-                "pincode": curr_invoice.get("customer_postal_code_en"),
-                "phone": curr_invoice.get("customer_contact_no_en"),
-            }
-        )
+    if len(erp_address) == 0:
+        for address in erp_address:
+            for link in address.links:
+                if link.link_name != customer_name:
+                    address = frappe.get_doc(
+                        {
+                            "doctype": "Address",
+                            "address_title": address_name,
+                            "address_line1": curr_invoice.get("agent_street_name_en"),
+                            "address_line2": curr_invoice.get("agent_building_no_en"),
+                            # "address_in_arabic": curr_invoice.get("customer_address_ar"),
+                            "country": curr_invoice.get("customer_country_en"),
+                            "pincode": curr_invoice.get("customer_postal_code_en"),
+                            "phone": curr_invoice.get("customer_contact_no_en"),
+                        }
+                    )
 
-        if curr_invoice.get("customer_city_en") != "":
-            address.city = curr_invoice.get("customer_city_en")
-        else:
-            address.city = "--"
-        
-        address.append("links", {
-            'link_doctype': "Customer",
-            'link_name': customer_name,
-            'link_title': customer_name
-        })
-        address.insert(ignore_permissions=True)
+                    if curr_invoice.get("customer_city_en") != "":
+                        address.city = curr_invoice.get("customer_city_en")
+                    else:
+                        address.city = "--"
+                    
+                    address.append("links", {
+                        'link_doctype': "Customer",
+                        'link_name': customer_name,
+                        'link_title': customer_name
+                    })
+                    address.insert(ignore_permissions=True)
 
-        frappe.db.commit()
-        return address.name
+                    frappe.db.commit()
+                    return address.name
 
     return erp_address[0].name
 
