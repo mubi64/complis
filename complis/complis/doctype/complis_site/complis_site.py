@@ -68,27 +68,54 @@ def get_invoices_from_complis(site):
         )
 
     invoices = r.get("data")
-    itrableInvoices = {}
+    # itrableInvoices = {}
+    # for invoice in invoices:
+    #     invoice_no = invoice['invoice_no']
+    #     items = invoice['Item_List']
+    #     if any(item['item_qty'] == 0 for item in items):
+    #         continue
+    #         # invoices.remove(invoice)
+    #     #     if item.get('item_qty') == 0:
+    #     #         # # print(item.item_qty, "Item QTY Print")
+    #     #         # if (len(items) > 0):
+    #     #         #     items.remove(item)
+    #     #         # else:
+    #     #         invoices.remove(invoice)
+
+    #     if invoice_no in itrableInvoices:
+    #         for item in items:
+    #             name = item['sr_no']
+    #             item_qty = item['item_qty']
+    #             existing_item = next(
+    #                 (i for i in invoices[invoice_no] if i['sr_no'] == name), None)
+    #             if existing_item:
+    #                 existing_item['item_qty'] += item_qty
+    #             else:
+    #                 itrableInvoices[invoice_no]['Item_List'].extend(items)
+    #     else:
+    #         itrableInvoices[invoice_no] = invoice
+
+    # result = list(itrableInvoices.values())
+    result = []
     for invoice in invoices:
         invoice_no = invoice['invoice_no']
         items = invoice['Item_List']
         if any(item['item_qty'] == 0 for item in items):
             continue
-            # invoices.remove(invoice)
-        # for item in items:
-        #     if item.get('item_qty') == 0:
-        #         # # print(item.item_qty, "Item QTY Print")
-        #         # if (len(items) > 0):
-        #         #     items.remove(item)
-        #         # else:
-        #         invoices.remove(invoice)
 
-        if invoice_no in itrableInvoices:
-            itrableInvoices[invoice_no]['Item_List'].extend(items)
+        existing_invoice = next((i for i in result if i['invoice_no'] == invoice_no), None)
+        if existing_invoice:
+            for item in items:
+                name = item['sr_no']
+                item_qty = item['item_qty']
+                existing_item = next((i for i in existing_invoice['Item_List'] if i['sr_no'] == name), None)
+                if existing_item:
+                    # existing_item['item_qty'] += item_qty
+                    print("existing item")
+                else:
+                    existing_invoice['Item_List'].append(item)
         else:
-            itrableInvoices[invoice_no] = invoice
-
-    result = list(itrableInvoices.values())
+            result.append(invoice)
     last_invoice = insert_invoices_from_complis(result, site)
     # sync_from = last_invoice.get("invoice_date")
 
@@ -126,7 +153,8 @@ def insert_invoices_from_complis(invoices, site):
             if curr_invoice.get("customer_address_en"):
                 address_name = curr_invoice.get("invoice_no")
                 customer_name = curr_invoice.get("customer_name_en")
-                erp_address = get_erp_address(address_name, customer_name, curr_invoice)
+                erp_address = get_erp_address(
+                    address_name, customer_name, curr_invoice)
             # check items from erp
             if (len(curr_invoice.get("Item_List")) > 0):
                 items = curr_invoice.get("Item_List")
@@ -225,7 +253,7 @@ def get_erp_address(address_name, customer_name, curr_invoice):
                         address.city = curr_invoice.get("customer_city_en")
                     else:
                         address.city = "--"
-                    
+
                     address.append("links", {
                         'link_doctype': "Customer",
                         'link_name': customer_name,
@@ -237,6 +265,7 @@ def get_erp_address(address_name, customer_name, curr_invoice):
                     return address.name
 
     return erp_address[0].name
+
 
 def get_erp_customer(customer_name, site, curr_invoice):
     erp_customer = frappe.get_all("Customer", filters={
