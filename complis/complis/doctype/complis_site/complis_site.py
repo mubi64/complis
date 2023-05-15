@@ -96,26 +96,78 @@ def get_invoices_from_complis(site):
     #         itrableInvoices[invoice_no] = invoice
 
     # result = list(itrableInvoices.values())
-    result = []
+    # result = []
+    # for invoice in invoices:
+    #     invoice_no = invoice['invoice_no']
+    #     items = invoice['Item_List']
+    #     if any(item['item_qty'] == 0 for item in items):
+    #         continue
+
+    #     existing_invoice = next((i for i in result if i['invoice_no'] == invoice_no), None)
+    #     if existing_invoice:
+    #         for item in items:
+    #             name = item['sr_no']
+    #             item_qty = item['item_qty']
+    #             existing_item = next((i for i in existing_invoice['Item_List'] if i['sr_no'] == name), None)
+    #             if existing_item:
+    #                 # existing_item['item_qty'] += item_qty
+    #                 print("existing item")
+    #             else:
+    #                 existing_invoice['Item_List'].append(item)
+    #     else:
+    #         result.append(invoice)
+    # itrableInvoices = {}
+
+    # for invoice in invoices:
+    #     invoice_no = invoice['invoice_no']
+    #     items = invoice['Item_List']
+    #     unique_objects = []
+    #     seen_srnos = set()
+    #     for obj in items:
+    #         sr_no = obj['sr_no']
+    #         if sr_no not in seen_srnos:
+    #             unique_objects.append(obj)
+    #             seen_srnos.add(sr_no)
+    #     if any(item['item_qty'] == 0 for item in items):
+    #         continue
+    #         # invoices.remove(invoice)
+    #     # for item in items:
+    #     #     if item.get('item_qty') == 0:
+    #     #         # # print(item.item_qty, "Item QTY Print")
+    #     #         # if (len(items) > 0):
+    #     #         #     items.remove(item)
+    #     #         # else:
+    #     #         invoices.remove(invoice)
+
+    #     if invoice_no in itrableInvoices:
+    #         itrableInvoices[invoice_no]['Item_List'].extend(unique_objects)
+    #     else:
+    #         itrableInvoices[invoice_no] = invoice
+
+    # result = list(itrableInvoices.values())
+    itrableInvoices = {}
+
     for invoice in invoices:
         invoice_no = invoice['invoice_no']
         items = invoice['Item_List']
+        unique_objects = []
+        seen_srnos = set()
         if any(item['item_qty'] == 0 for item in items):
             continue
 
-        existing_invoice = next((i for i in result if i['invoice_no'] == invoice_no), None)
-        if existing_invoice:
-            for item in items:
-                name = item['sr_no']
-                item_qty = item['item_qty']
-                existing_item = next((i for i in existing_invoice['Item_List'] if i['sr_no'] == name), None)
-                if existing_item:
-                    # existing_item['item_qty'] += item_qty
-                    print("existing item")
-                else:
-                    existing_invoice['Item_List'].append(item)
+        if invoice_no in itrableInvoices:
+            itrableInvoices[invoice_no]['Item_List'].extend(items)  # Assign unique_objects to Item_List
         else:
-            result.append(invoice)
+            itrableInvoices[invoice_no] = invoice
+            
+        for obj in itrableInvoices[invoice_no]['Item_List']:
+            sr_no = obj['sr_no']
+            if sr_no not in seen_srnos:
+                unique_objects.append(obj)
+                seen_srnos.add(sr_no)
+        itrableInvoices[invoice_no]['Item_List'] = unique_objects
+
+    result = list(itrableInvoices.values())
     last_invoice = insert_invoices_from_complis(result, site)
     # sync_from = last_invoice.get("invoice_date")
 
