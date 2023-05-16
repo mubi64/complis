@@ -364,7 +364,9 @@ def get_erp_items(items, site):
                         "item_name": x.get("item_desc_en"),
                         "item_group": "All Item Groups",
                         "stock_uom": "Nos",
-                        "is_stock_item": 1,
+                        "is_stock_item": 0,
+                        "include_item_in_manufacturing": 0,
+                        "item_group": "Services",
                         "standard_rate": x.get("item_price")
                     }
                 ).insert(ignore_permissions=True)
