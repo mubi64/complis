@@ -16,6 +16,21 @@ class ComplisSite(Document):
 
 
 @frappe.whitelist()
+def sync_invoices_with_scheduler():
+    complis_sites = frappe.get_all("Complis Site", filters={"enabled": 1})
+    if (len(complis_sites) == 0):
+        frappe.throw(
+            _("Complis sites not found. Please make atleast one complis site and try again")
+        )
+
+    for x in complis_sites:
+        site = frappe.get_doc("Complis Site", x)
+        synced_date = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
+        get_invoices_from_complis(site, synced_date, datetime.datetime.now())
+
+    return "Success"
+
+@frappe.whitelist()
 def sync_invoices():
     complis_sites = frappe.get_all("Complis Site", filters={"enabled": 1})
     if (len(complis_sites) == 0):
@@ -25,18 +40,19 @@ def sync_invoices():
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x)
-        sync_invoice_for_single_site(site)
+        synced_date = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
+        to_date = datetime.datetime.strptime(str(site.synced_to), "%Y-%m-%d %H:%M:%S")
+        get_invoices_from_complis(site, synced_date, to_date)
 
     return "Success"
 
 
-def sync_invoice_for_single_site(site):
-    get_invoices_from_complis(site)
+# def sync_invoice_for_single_site(site):
+#     get_invoices_from_complis(site)
 
 
-def get_invoices_from_complis(site):
-    dt = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-    fromdate = dt.strftime("%Y-%-m-%-dT%H:%M:%S.%f")[:-3] + 'Z'
+def get_invoices_from_complis(site, synced_date, to_date):
+    fromdate = synced_date.strftime("%Y-%m-%-dT%H:%M:%S.%f")[:-3] + 'Z'
     secret = site.secret_key
     myEncoder = 'utf-8'
     Key = str(fromdate).encode(myEncoder)
@@ -48,13 +64,11 @@ def get_invoices_from_complis(site):
     calculatedSecret = hash.upper()
     data = {
         "date_from": str(fromdate),
-        "date_to": str(datetime.datetime.now().strftime("%Y-%-m-%-dT%H:%M:%S.%f")[:-3] + 'Z'),
+        "date_to": str(to_date.strftime("%Y-%m-%-dT%H:%M:%S.%f")[:-3] + 'Z'),
         "key": calculatedSecret
     }
 
-    print(data, "My data List")
-
-    # sync_from = site.synced_till
+    # print(data, "My data List")
 
     # while (1 == 1):
     try:
@@ -68,83 +82,6 @@ def get_invoices_from_complis(site):
         )
 
     invoices = r.get("data")
-    # itrableInvoices = {}
-    # for invoice in invoices:
-    #     invoice_no = invoice['invoice_no']
-    #     items = invoice['Item_List']
-    #     if any(item['item_qty'] == 0 for item in items):
-    #         continue
-    #         # invoices.remove(invoice)
-    #     #     if item.get('item_qty') == 0:
-    #     #         # # print(item.item_qty, "Item QTY Print")
-    #     #         # if (len(items) > 0):
-    #     #         #     items.remove(item)
-    #     #         # else:
-    #     #         invoices.remove(invoice)
-
-    #     if invoice_no in itrableInvoices:
-    #         for item in items:
-    #             name = item['sr_no']
-    #             item_qty = item['item_qty']
-    #             existing_item = next(
-    #                 (i for i in invoices[invoice_no] if i['sr_no'] == name), None)
-    #             if existing_item:
-    #                 existing_item['item_qty'] += item_qty
-    #             else:
-    #                 itrableInvoices[invoice_no]['Item_List'].extend(items)
-    #     else:
-    #         itrableInvoices[invoice_no] = invoice
-
-    # result = list(itrableInvoices.values())
-    # result = []
-    # for invoice in invoices:
-    #     invoice_no = invoice['invoice_no']
-    #     items = invoice['Item_List']
-    #     if any(item['item_qty'] == 0 for item in items):
-    #         continue
-
-    #     existing_invoice = next((i for i in result if i['invoice_no'] == invoice_no), None)
-    #     if existing_invoice:
-    #         for item in items:
-    #             name = item['sr_no']
-    #             item_qty = item['item_qty']
-    #             existing_item = next((i for i in existing_invoice['Item_List'] if i['sr_no'] == name), None)
-    #             if existing_item:
-    #                 # existing_item['item_qty'] += item_qty
-    #                 print("existing item")
-    #             else:
-    #                 existing_invoice['Item_List'].append(item)
-    #     else:
-    #         result.append(invoice)
-    # itrableInvoices = {}
-
-    # for invoice in invoices:
-    #     invoice_no = invoice['invoice_no']
-    #     items = invoice['Item_List']
-    #     unique_objects = []
-    #     seen_srnos = set()
-    #     for obj in items:
-    #         sr_no = obj['sr_no']
-    #         if sr_no not in seen_srnos:
-    #             unique_objects.append(obj)
-    #             seen_srnos.add(sr_no)
-    #     if any(item['item_qty'] == 0 for item in items):
-    #         continue
-    #         # invoices.remove(invoice)
-    #     # for item in items:
-    #     #     if item.get('item_qty') == 0:
-    #     #         # # print(item.item_qty, "Item QTY Print")
-    #     #         # if (len(items) > 0):
-    #     #         #     items.remove(item)
-    #     #         # else:
-    #     #         invoices.remove(invoice)
-
-    #     if invoice_no in itrableInvoices:
-    #         itrableInvoices[invoice_no]['Item_List'].extend(unique_objects)
-    #     else:
-    #         itrableInvoices[invoice_no] = invoice
-
-    # result = list(itrableInvoices.values())
     itrableInvoices = {}
 
     for invoice in invoices:
@@ -205,7 +142,7 @@ def insert_invoices_from_complis(invoices, site):
             if curr_invoice.get("customer_address_en"):
                 address_name = curr_invoice.get("invoice_no")
                 customer_name = curr_invoice.get("customer_name_en")
-                erp_address = get_erp_address(
+                get_erp_address(
                     address_name, customer_name, curr_invoice)
             # check items from erp
             if (len(curr_invoice.get("Item_List")) > 0):
@@ -274,6 +211,7 @@ def insert_invoices_from_complis(invoices, site):
 
     if curr_invoice:
         site.synced_till = curr_invoice.get("invoice_date")
+        site.synced_to = datetime.datetime.now()
         site.save()
         frappe.db.commit()
     return curr_invoice
@@ -282,7 +220,7 @@ def insert_invoices_from_complis(invoices, site):
 def get_erp_address(address_name, customer_name, curr_invoice):
     # erp_address = frappe.db.sql(""" SELECT name, links FROM `tabAddress` """)
     erp_address = frappe.get_all("Address", filters={
-        "pincode": curr_invoice.get("customer_postal_code_en"),
+        "pincode": curr_invoice.get("agent_postal_code_en"),
     })
     if len(erp_address) == 0:
         for address in erp_address:
@@ -295,14 +233,14 @@ def get_erp_address(address_name, customer_name, curr_invoice):
                             "address_line1": curr_invoice.get("agent_street_name_en"),
                             "address_line2": curr_invoice.get("agent_building_no_en"),
                             # "address_in_arabic": curr_invoice.get("customer_address_ar"),
-                            "country": curr_invoice.get("customer_country_en"),
-                            "pincode": curr_invoice.get("customer_postal_code_en"),
-                            "phone": curr_invoice.get("customer_contact_no_en"),
+                            "country": curr_invoice.get("agent_country_en"),
+                            "pincode": curr_invoice.get("agent_postal_code_en"),
+                            "phone": curr_invoice.get("agent_contact_no_en"),
                         }
                     )
 
-                    if curr_invoice.get("customer_city_en") != "":
-                        address.city = curr_invoice.get("customer_city_en")
+                    if curr_invoice.get("agent_city_en") != "":
+                        address.city = curr_invoice.get("agent_city_en")
                     else:
                         address.city = "--"
 
@@ -315,8 +253,6 @@ def get_erp_address(address_name, customer_name, curr_invoice):
 
                     frappe.db.commit()
                     return address.name
-
-    return erp_address[0].name
 
 
 def get_erp_customer(customer_name, site, curr_invoice):
