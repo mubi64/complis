@@ -17,7 +17,8 @@ class ComplisSite(Document):
 
 @frappe.whitelist()
 def sync_invoices_with_scheduler():
-    complis_sites = frappe.get_all("Complis Site", filters={"enabled": 1})
+    complis_sites = frappe.get_all("Complis Site", filters={
+                                   "enabled": 1}, fields=["*"])
     if (len(complis_sites) == 0):
         frappe.throw(
             _("Complis sites not found. Please make atleast one complis site and try again")
@@ -25,10 +26,12 @@ def sync_invoices_with_scheduler():
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x)
-        synced_date = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
+        synced_date = datetime.datetime.strptime(
+            str(site.synced_till), "%Y-%m-%d %H:%M:%S")
         get_invoices_from_complis(site, synced_date, datetime.datetime.now())
 
     return "Success"
+
 
 @frappe.whitelist()
 def sync_invoices():
@@ -40,8 +43,10 @@ def sync_invoices():
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x)
-        synced_date = datetime.datetime.strptime(str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-        to_date = datetime.datetime.strptime(str(site.synced_to), "%Y-%m-%d %H:%M:%S")
+        synced_date = datetime.datetime.strptime(
+            str(site.synced_till), "%Y-%m-%d %H:%M:%S")
+        to_date = datetime.datetime.strptime(
+            str(site.synced_to), "%Y-%m-%d %H:%M:%S")
         get_invoices_from_complis(site, synced_date, to_date)
 
     return "Success"
@@ -93,10 +98,11 @@ def get_invoices_from_complis(site, synced_date, to_date):
             continue
 
         if invoice_no in itrableInvoices:
-            itrableInvoices[invoice_no]['Item_List'].extend(items)  # Assign unique_objects to Item_List
+            itrableInvoices[invoice_no]['Item_List'].extend(
+                items)  # Assign unique_objects to Item_List
         else:
             itrableInvoices[invoice_no] = invoice
-            
+
         for obj in itrableInvoices[invoice_no]['Item_List']:
             sr_no = obj['sr_no']
             if sr_no not in seen_srnos:
@@ -220,39 +226,50 @@ def insert_invoices_from_complis(invoices, site):
 def get_erp_address(address_name, customer_name, curr_invoice):
     # erp_address = frappe.db.sql(""" SELECT name, links FROM `tabAddress` """)
     erp_address = frappe.get_all("Address", filters={
-        "pincode": curr_invoice.get("agent_postal_code_en"),
-    })
+        "address_title": customer_name,
+    }, fields=["*"])
     if len(erp_address) == 0:
-        for address in erp_address:
-            for link in address.links:
-                if link.link_name != customer_name:
-                    address = frappe.get_doc(
-                        {
-                            "doctype": "Address",
-                            "address_title": address_name,
-                            "address_line1": curr_invoice.get("agent_street_name_en"),
-                            "address_line2": curr_invoice.get("agent_building_no_en"),
-                            # "address_in_arabic": curr_invoice.get("customer_address_ar"),
-                            "country": curr_invoice.get("agent_country_en"),
-                            "pincode": curr_invoice.get("agent_postal_code_en"),
-                            "phone": curr_invoice.get("agent_contact_no_en"),
-                        }
-                    )
+        if (not frappe.db.exists("Item", {"address_title": customer_name})):
+            address = frappe.get_doc(
+                {
+                    "doctype": "Address",
+                    "address_title": customer_name,
+                    "address_line1": curr_invoice.get("customer_street_name_en") if curr_invoice.get("customer_street_name_en") != "" else "---",
+                    "address_line2": curr_invoice.get("customer_building_no_en"),
+                    # "address_in_arabic": curr_invoice.get("customer_address_ar"),
+                    "country": curr_invoice.get("customer_country_en"),
+                    "pincode": curr_invoice.get("customer_postal_code_en"),
+                    "phone": curr_invoice.get("customer_contact_no_en"),
+                }
+            )
 
-                    if curr_invoice.get("agent_city_en") != "":
-                        address.city = curr_invoice.get("agent_city_en")
-                    else:
-                        address.city = "--"
+            if curr_invoice.get("customer_city_en") != "":
+                address.city = curr_invoice.get("customer_city_en")
+            else:
+                address.city = "--"
 
-                    address.append("links", {
-                        'link_doctype': "Customer",
-                        'link_name': customer_name,
-                        'link_title': customer_name
-                    })
-                    address.insert(ignore_permissions=True)
+            address.append("links", {
+                'link_doctype': "Customer",
+                'link_name': customer_name,
+                'link_title': customer_name
+            })
+            address.insert(ignore_permissions=True)
 
-                    frappe.db.commit()
-                    return address.name
+            frappe.db.commit()
+            return address.name
+    # else:
+    #     for address in erp_address:
+    #         for link in address.links:
+    #             if link.link_name != customer_name:
+    #                 address.append("links", {
+    #                     'link_doctype': "Customer",
+    #                     'link_name': customer_name,
+    #                     'link_title': customer_name
+    #                 })
+    #                 address.insert(ignore_permissions=True)
+    #                 frappe.db.commit()
+    #                 return address.name
+
 
 
 def get_erp_customer(customer_name, site, curr_invoice):
