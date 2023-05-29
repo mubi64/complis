@@ -89,29 +89,30 @@ def get_invoices_from_complis(site, synced_date, to_date):
     invoices = r.get("data")
     itrableInvoices = {}
 
-    for invoice in invoices:
-        invoice_no = invoice['invoice_no']
-        items = invoice['Item_List']
-        unique_objects = []
-        seen_srnos = set()
-        if any(item['item_qty'] == 0 for item in items):
-            continue
+    if invoices != None:
+        for invoice in invoices:
+            invoice_no = invoice['invoice_no']
+            items = invoice['Item_List']
+            unique_objects = []
+            seen_srnos = set()
+            if any(item['item_qty'] == 0 for item in items):
+                continue
 
-        if invoice_no in itrableInvoices:
-            itrableInvoices[invoice_no]['Item_List'].extend(
-                items)  # Assign unique_objects to Item_List
-        else:
-            itrableInvoices[invoice_no] = invoice
+            if invoice_no in itrableInvoices:
+                itrableInvoices[invoice_no]['Item_List'].extend(
+                    items)  # Assign unique_objects to Item_List
+            else:
+                itrableInvoices[invoice_no] = invoice
 
-        for obj in itrableInvoices[invoice_no]['Item_List']:
-            sr_no = obj['sr_no']
-            if sr_no not in seen_srnos:
-                unique_objects.append(obj)
-                seen_srnos.add(sr_no)
-        itrableInvoices[invoice_no]['Item_List'] = unique_objects
+            for obj in itrableInvoices[invoice_no]['Item_List']:
+                sr_no = obj['sr_no']
+                if sr_no not in seen_srnos:
+                    unique_objects.append(obj)
+                    seen_srnos.add(sr_no)
+            itrableInvoices[invoice_no]['Item_List'] = unique_objects
 
-    result = list(itrableInvoices.values())
-    last_invoice = insert_invoices_from_complis(result, site)
+        result = list(itrableInvoices.values())
+        last_invoice = insert_invoices_from_complis(result, site)
     # sync_from = last_invoice.get("invoice_date")
 
     # if r.get("next") is None:
