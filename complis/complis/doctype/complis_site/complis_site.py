@@ -51,11 +51,6 @@ def sync_invoices():
 
     return "Success"
 
-
-# def sync_invoice_for_single_site(site):
-#     get_invoices_from_complis(site)
-
-
 def get_invoices_from_complis(site, synced_date, to_date):
     fromdate = synced_date.strftime("%Y-%m-%-dT%H:%M:%S.%f")[:-3] + 'Z'
     secret = site.secret_key
@@ -75,7 +70,6 @@ def get_invoices_from_complis(site, synced_date, to_date):
 
     # print(data, "My data List")
 
-    # while (1 == 1):
     try:
         r = requests.post(site.complis_site_url, json=data).json()
     except requests.exceptions.HTTPError:
@@ -132,13 +126,11 @@ def insert_invoices_from_complis(invoices, site):
         erp_invoices = frappe.get_all("Sales Invoice", filters={
             "complis_record_id": x.get("invoice_no")
         })
-        print(x.get("invoice_no"), "Invoice No Print")
         # if length is more than 0 then this invoice is already synced with erp
         if (len(erp_invoices) == 0):
             curr_invoice = x
 
             erp_customer = site.default_customer
-            erp_items = None
 
             # check customer from erp
             if (curr_invoice.get("customer_name_en") is not None):
@@ -154,7 +146,7 @@ def insert_invoices_from_complis(invoices, site):
             # check items from erp
             if (len(curr_invoice.get("Item_List")) > 0):
                 items = curr_invoice.get("Item_List")
-                erp_items = get_erp_items(items, site)
+                get_erp_items(items, site)
 
             sales_tax_template = site.sales_tax_template
             # if tax template is not defined in the complis settings then use default one
@@ -218,7 +210,7 @@ def insert_invoices_from_complis(invoices, site):
 
     if curr_invoice:
         site.synced_till = curr_invoice.get("invoice_date")
-        site.synced_to = datetime.datetime.now()
+        site.synced_to = datetime.datetime.strptime((curr_invoice.get("invoice_date")+" 00:00:00.000000"), "%Y-%m-%d %H:%M:%S.%f") + datetime.timedelta(days=5)
         site.save()
         frappe.db.commit()
     return curr_invoice
@@ -258,20 +250,6 @@ def get_erp_address(address_name, customer_name, curr_invoice):
 
             frappe.db.commit()
             return address.name
-    # else:
-    #     for address in erp_address:
-    #         for link in address.links:
-    #             if link.link_name != customer_name:
-    #                 address.append("links", {
-    #                     'link_doctype': "Customer",
-    #                     'link_name': customer_name,
-    #                     'link_title': customer_name
-    #                 })
-    #                 address.insert(ignore_permissions=True)
-    #                 frappe.db.commit()
-    #                 return address.name
-
-
 
 def get_erp_customer(customer_name, site, curr_invoice):
     erp_customer = frappe.get_all("Customer", filters={
@@ -286,7 +264,6 @@ def get_erp_customer(customer_name, site, curr_invoice):
                 "customer_name_in_arabic": curr_invoice.get("customer_name_ar"),
                 "customer_group": "All Customer Groups",
                 "territory": "All Territories",
-                # "address_line1": people.get("address")
             }
         ).insert(ignore_permissions=True)
 
@@ -297,9 +274,8 @@ def get_erp_customer(customer_name, site, curr_invoice):
 
 
 def get_erp_items(items, site):
-    erp_items = []
     for x in items:
-        product_id = x.get("item_desc_en")
+        product_id = x.get("item_desc_en").strip()
         items_in_db = frappe.get_all("Item",
                                      filters={
                                          "complis_item_code": product_id
@@ -309,13 +285,18 @@ def get_erp_items(items, site):
         if (len(items_in_db) == 0):
             # item is not present in erp by complis code, lets try with item name
             item = None
-            if (not frappe.db.exists("Item", {"name": x.get("item_desc_en")})):
+            if frappe.db.exists("Item", {"name": product_id}):
+                item = frappe.get_doc("Item", product_id)
+                if (item.complis_item_code == None):
+                    item.complis_item_code = product_id
+                item.save()
+            else:
                 item = frappe.get_doc(
                     {
                         "doctype": "Item",
-                        "item_code": x.get("item_desc_en"),
-                        "complis_item_code": x.get("item_desc_en"),
-                        "item_name": x.get("item_desc_en"),
+                        "item_code": product_id,
+                        "complis_item_code": product_id,
+                        "item_name": product_id,
                         "item_group": "All Item Groups",
                         "stock_uom": "Nos",
                         "is_stock_item": 0,
@@ -324,21 +305,6 @@ def get_erp_items(items, site):
                         "standard_rate": x.get("item_price")
                     }
                 ).insert(ignore_permissions=True)
-            else:
-                item = frappe.get_doc("Item", x.get("item_desc_en"))
-                if (item.complis_item_code == None):
-                    item.complis_item_code = x.get("item_desc_en")
-                item.save()
-
-            erp_items.append({
-                "name": item.name,
-                "complis_item_code": item.complis_item_code
-            })
-        else:
-            erp_items.append({
-                "name": items_in_db[0].get("name"),
-                "complis_item_code": items_in_db[0].get("complis_item_code")
-            })
 
     frappe.db.commit()
-    return erp_items
+    return "Success"
