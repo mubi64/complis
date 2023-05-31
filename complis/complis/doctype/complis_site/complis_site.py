@@ -305,6 +305,6 @@ def get_erp_items(items, site):
                         "standard_rate": x.get("item_price")
                     }
                 ).insert(ignore_permissions=True)
+                frappe.db.commit()
 
-    frappe.db.commit()
     return "Success"
