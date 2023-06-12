@@ -134,7 +134,7 @@ def insert_invoices_from_complis(invoices, site):
 
             # check customer from erp
             if (curr_invoice.get("customer_name_en") is not None):
-                customer_name = curr_invoice.get("customer_name_en")
+                customer_name = curr_invoice.get("customer_name_en").strip()
                 erp_customer = get_erp_customer(
                     customer_name, site, curr_invoice)
 
@@ -252,8 +252,9 @@ def get_erp_address(address_name, customer_name, curr_invoice):
             return address.name
 
 def get_erp_customer(customer_name, site, curr_invoice):
+    customer = {}
     erp_customer = frappe.get_all("Customer", filters={
-        "customer_name": customer_name
+        "name": customer_name
     })
     if (len(erp_customer) == 0):
         customer = frappe.get_doc(
