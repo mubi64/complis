@@ -6,7 +6,7 @@ from frappe import _
 import requests
 from frappe.utils import now, add_to_date
 from frappe.model.document import Document
-import datetime
+from datetime import datetime, timedelta
 import hashlib
 import hmac
 
@@ -25,10 +25,11 @@ def sync_invoices_with_scheduler():
         )
 
     for x in complis_sites:
-        site = frappe.get_doc("Complis Site", x)
-        synced_date = datetime.datetime.strptime(
-            str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-        get_invoices_from_complis(site, synced_date, datetime.datetime.now())
+        site = frappe.get_doc("Complis Site", x.name)
+        date_string = str(datetime.now() - timedelta(days=60))
+        date_string = date_string.split(".")[0]  # Remove milliseconds
+        synced_date = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        get_invoices_from_complis(site, synced_date, datetime.now())
 
     return "Success"
 
@@ -43,9 +44,9 @@ def sync_invoices():
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x)
-        synced_date = datetime.datetime.strptime(
+        synced_date = datetime.strptime(
             str(site.synced_till), "%Y-%m-%d %H:%M:%S")
-        to_date = datetime.datetime.strptime(
+        to_date = datetime.strptime(
             str(site.synced_to), "%Y-%m-%d %H:%M:%S")
         get_invoices_from_complis(site, synced_date, to_date)
 
@@ -210,7 +211,7 @@ def insert_invoices_from_complis(invoices, site):
 
     if curr_invoice:
         site.synced_till = curr_invoice.get("invoice_date")
-        site.synced_to = datetime.datetime.strptime((curr_invoice.get("invoice_date")+" 00:00:00.000000"), "%Y-%m-%d %H:%M:%S.%f") + datetime.timedelta(days=5)
+        site.synced_to = datetime.strptime((curr_invoice.get("invoice_date")+" 00:00:00.000000"), "%Y-%m-%d %H:%M:%S.%f") + timedelta(days=3)
         site.save()
         frappe.db.commit()
     return curr_invoice
