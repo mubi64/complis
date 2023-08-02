@@ -26,7 +26,7 @@ def sync_invoices_with_scheduler():
 
     for x in complis_sites:
         site = frappe.get_doc("Complis Site", x.name)
-        date_string = str(datetime.now() - timedelta(days=60))
+        date_string = str(datetime.now() - timedelta(days=15))
         date_string = date_string.split(".")[0]  # Remove milliseconds
         synced_date = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
         get_invoices_from_complis(site, synced_date, datetime.now())
@@ -69,7 +69,7 @@ def get_invoices_from_complis(site, synced_date, to_date):
         "key": calculatedSecret
     }
 
-    # print(data, "My data List")
+    print(data, "My data List")
 
     try:
         r = requests.post(site.complis_site_url, json=data).json()
