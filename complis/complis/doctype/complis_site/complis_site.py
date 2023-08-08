@@ -300,6 +300,7 @@ def get_erp_items(items, site):
                         "doctype": "Item",
                         "item_code": product_id,
                         "complis_item_code": product_id,
+                        "complis_item_no": x.get("sr_no"),
                         "item_name": product_id,
                         "item_group": "All Item Groups",
                         "stock_uom": "Nos",
