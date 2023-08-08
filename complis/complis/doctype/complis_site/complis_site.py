@@ -170,6 +170,7 @@ def insert_invoices_from_complis(invoices, site):
             si.debit_to = site.receivable_account
             si.update_stock = 0
             si.set_warehouse = site.warehouse
+            si.po_no = curr_invoice.get("Item_List")[0]['customer_order_no']
 
             if site.company:
                 si.company = site.company
@@ -264,6 +265,7 @@ def get_erp_customer(customer_name, site, curr_invoice):
                 "complis_customer_id": curr_invoice.get("customer_name_en"),
                 "customer_name": curr_invoice.get("customer_name_en"),
                 "customer_name_in_arabic": curr_invoice.get("customer_name_ar"),
+                "txt_id": curr_invoice.get("customer_vat_no"),
                 "customer_group": "All Customer Groups",
                 "territory": "All Territories",
             }
