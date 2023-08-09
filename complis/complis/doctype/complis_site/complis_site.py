@@ -170,7 +170,7 @@ def insert_invoices_from_complis(invoices, site):
             si.debit_to = site.receivable_account
             si.update_stock = 0
             si.set_warehouse = site.warehouse
-            si.po_no = curr_invoice.get("Item_List")[0]['customer_order_no']
+            # si.po_no = curr_invoice.get("Item_List")[0]['customer_order_no']
 
             if site.company:
                 si.company = site.company
@@ -307,7 +307,8 @@ def get_erp_items(items, site):
                         "is_stock_item": 0,
                         "include_item_in_manufacturing": 0,
                         "item_group": "Services",
-                        "standard_rate": x.get("item_price")
+                        "standard_rate": x.get("item_price"),
+                        "purchase_order_no": x.get("customer_order_no")
                     }
                 ).insert(ignore_permissions=True)
                 frappe.db.commit()
