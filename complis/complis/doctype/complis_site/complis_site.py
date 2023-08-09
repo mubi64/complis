@@ -183,15 +183,15 @@ def insert_invoices_from_complis(invoices, site):
             for i in curr_invoice.get("Item_List"):
                 db_items = frappe.get_all("Item", filters={
                     "name": i.get("item_desc_en").strip()
-                }, fields=["name", "complis_item_no", "purchase_order_no"])
+                }, fields=["name", "purchase_order_no"])
                 if (len(db_items) > 0):
                     erp_item = db_items[0]
                     discount = 0
                     rate = float(i.get("item_price"))
                     si.append("items", {
                         "item_code": erp_item.name,
-                        "complis_item_no": erp_item.complis_item_no,
-                        "purchase_order_no": erp_item.purchase_order_no,
+                        "complis_item_no": i.get("sr_no"),
+                        "purchase_order_no": i.get("customer_order_no"),
                         "rate": round(rate, 2) / int(i.get("item_qty")),
                         "qty": i.get("item_qty")
                     })
