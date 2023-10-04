@@ -171,7 +171,6 @@ def insert_invoices_from_complis(invoices, site):
             si.update_stock = 0
             si.set_warehouse = site.warehouse
             # si.po_no = curr_invoice.get("Item_List")[0]['customer_order_no']
-
             if site.company:
                 si.company = site.company
 
@@ -197,11 +196,12 @@ def insert_invoices_from_complis(invoices, site):
                     })
                     rate += rate
 
-            if rate < 0:
+            if float(i.get("item_qty")) < 0:
                 si.is_return = 1
                 si.naming_series = site.sales_return_series
             else:
                 si.naming_series = site.sales_invoice_series
+
             si.set_missing_values()
             si.insert(ignore_permissions=True)
 
