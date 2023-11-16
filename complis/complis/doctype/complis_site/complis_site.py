@@ -69,7 +69,7 @@ def get_invoices_from_complis(site, synced_date, to_date):
         "key": calculatedSecret
     }
 
-    print(data, "My data List")
+    # print(data, "My data List")
 
     try:
         r = requests.post(site.complis_site_url, json=data).json()
@@ -134,16 +134,15 @@ def insert_invoices_from_complis(invoices, site):
             erp_customer = site.default_customer
 
             # check customer from erp
-            if (curr_invoice.get("customer_name_en") is not None):
-                customer_name = curr_invoice.get("customer_name_en").strip()
+            if (curr_invoice.get("customer_code") is not None):
+                customer_name = curr_invoice.get("customer_code").strip()
                 erp_customer = get_erp_customer(
                     customer_name, site, curr_invoice)
 
             if curr_invoice.get("customer_address_en"):
                 address_name = curr_invoice.get("invoice_no")
-                customer_name = curr_invoice.get("customer_name_en")
                 get_erp_address(
-                    address_name, customer_name, curr_invoice)
+                    address_name, erp_customer, curr_invoice)
             # check items from erp
             if (len(curr_invoice.get("Item_List")) > 0):
                 items = curr_invoice.get("Item_List")
@@ -170,6 +169,10 @@ def insert_invoices_from_complis(invoices, site):
             si.debit_to = site.receivable_account
             si.update_stock = 0
             si.set_warehouse = site.warehouse
+            si.total_foreign_currency = curr_invoice.get("total_foreign_currency")
+            si.total_excl_tax = curr_invoice.get("total_excl_tax_fc")
+            si.total_tax = curr_invoice.get("total_tax_fc")
+            si.total_incl_tax = curr_invoice.get("total_incl_tax_fc")
             # si.po_no = curr_invoice.get("Item_List")[0]['customer_order_no']
             if site.company:
                 si.company = site.company
@@ -258,14 +261,16 @@ def get_erp_address(address_name, customer_name, curr_invoice):
 def get_erp_customer(customer_name, site, curr_invoice):
     customer = {}
     erp_customer = frappe.get_all("Customer", filters={
-        "name": customer_name
+        "complis_customer_id": customer_name
     })
+    
     if (len(erp_customer) == 0):
         customer = frappe.get_doc(
             {
                 "doctype": "Customer",
-                "complis_customer_id": curr_invoice.get("customer_name_en"),
-                "customer_name": curr_invoice.get("customer_name_en"),
+                "complis_customer_id": curr_invoice.get("customer_code"),
+                "customer_name": curr_invoice.get("customer_code"),
+                "customer_number": curr_invoice.get("customer_name_en"),
                 "customer_name_in_arabic": curr_invoice.get("customer_name_ar"),
                 "txt_id": curr_invoice.get("customer_vat_no"),
                 "customer_group": "All Customer Groups",

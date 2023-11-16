@@ -15,7 +15,7 @@ fixtures = [
                 "fieldname",
                 "in",
                 (
-                    "complis_customer_id", "complis_invoice_number", "complis_record_id", "complis_item_code", "complis_item_no", "purchase_order_no"
+                    "customer_name", "customer_name_in_arabic", "customer_number", "complis_customer_id", "complis_invoice_number", "complis_record_id", "complis_item_code", "complis_item_no", "purchase_order_no", "foreign_currency_details", "total_foreign_currency", "total_excl_tax", "column_break_s5imf", "total_tax", "total_incl_tax"
                 )
             ]
         ]
