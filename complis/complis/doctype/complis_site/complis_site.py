@@ -269,8 +269,8 @@ def get_erp_customer(customer_name, site, curr_invoice):
             {
                 "doctype": "Customer",
                 "complis_customer_id": curr_invoice.get("customer_code"),
-                "customer_name": curr_invoice.get("customer_code"),
-                "customer_number": curr_invoice.get("customer_name_en"),
+                "customer_name": curr_invoice.get("customer_name_en"),
+                "customer_number": curr_invoice.get("customer_code"),
                 "customer_name_in_arabic": curr_invoice.get("customer_name_ar"),
                 "txt_id": curr_invoice.get("customer_vat_no"),
                 "customer_group": "All Customer Groups",
