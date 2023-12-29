@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "sales_invoice_section",
   "enabled",
   "site_name",
   "complis_site_url",
@@ -23,7 +24,22 @@
   "company",
   "sales_tax_template",
   "sync_status",
-  "sync_invoices"
+  "sync_invoices",
+  "purchase_invoice_section",
+  "purchase_site_url",
+  "pr_secret_key",
+  "purchase_return_series",
+  "purchase_invoice_series",
+  "supplier_type",
+  "item_group",
+  "purchase_warehouse",
+  "column_break_0kpab",
+  "sync_start",
+  "sync_end",
+  "purchase_company",
+  "supplier_group",
+  "credit_to",
+  "sync_pr_invoices"
  ],
  "fields": [
   {
@@ -141,11 +157,110 @@
    "in_list_view": 1,
    "label": "Synced to",
    "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.perchase_site_url == \"\"",
+   "fieldname": "purchase_invoice_section",
+   "fieldtype": "Section Break",
+   "label": "Purchase Invoice"
+  },
+  {
+   "fieldname": "pr_secret_key",
+   "fieldtype": "Data",
+   "label": "Secret Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sync_start",
+   "fieldtype": "Datetime",
+   "label": "Sync Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_0kpab",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sync_end",
+   "fieldtype": "Datetime",
+   "label": "Sync End",
+   "reqd": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "purchase_return_series",
+   "fieldtype": "Data",
+   "label": "Purchase Return Series",
+   "reqd": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "purchase_invoice_series",
+   "fieldtype": "Data",
+   "label": "Purchase Invoice Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "purchase_company",
+   "fieldtype": "Link",
+   "label": "Purchase Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "sync_pr_invoices",
+   "fieldtype": "Button",
+   "label": "Sync Purchase Invoices"
+  },
+  {
+   "fieldname": "purchase_site_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Site Url",
+   "length": 500,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "supplier_group",
+   "fieldtype": "Link",
+   "label": "Supplier Group",
+   "options": "Supplier Group"
+  },
+  {
+   "fieldname": "supplier_type",
+   "fieldtype": "Select",
+   "label": "Supplier Type",
+   "options": "Company\nIndividual"
+  },
+  {
+   "fieldname": "credit_to",
+   "fieldtype": "Link",
+   "label": "Credit To",
+   "options": "Account"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "purchase_warehouse",
+   "fieldtype": "Link",
+   "label": "Purchase Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sales_invoice_section",
+   "fieldtype": "Section Break",
+   "label": "Sales Invoice"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-19 13:04:23.531588",
+ "modified": "2023-12-28 15:51:15.244962",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",

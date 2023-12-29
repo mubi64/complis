@@ -141,7 +141,8 @@ scheduler_events = {
     # 	"complis.tasks.daily"
     # ],
     "hourly": [
-        "complis.complis.doctype.complis_site.complis_site.sync_invoices_with_scheduler"
+        "complis.complis.doctype.complis_site.complis_site.sync_invoices_with_scheduler",
+        "complis.complis.doctype.complis_site.complis_site.sync_pr_invoices_with_scheduler"
     ],
     # "weekly": [
     # 	"complis.tasks.weekly"
