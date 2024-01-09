@@ -79,7 +79,7 @@ def sync_purchase_invoices():
             "date_to": str(doc.sync_end),
             "Secret": doc.pr_secret_key
         }
-        print(data, "check \n\n\n\n\n")
+        # print(data, "check \n\n\n\n\n")
         get_purchase_invoices_from_complis(doc, data)
 
     return "Success"
@@ -104,8 +104,6 @@ def get_purchase_invoices_from_complis(doc, data):
             "</b>: Invoices synced successfully!"
         )
     )
-
-
 
 
 def insert_pr_invoices_from_complis(doc, invoices):
@@ -145,12 +143,20 @@ def insert_pr_invoices_from_complis(doc, invoices):
                 "due_date": due_date.strftime("%Y-%m-%d"),
                 "bill_no": inv.get("invoice_no"),
                 "taxes_and_charges": sales_tax_template,
-                "credit_to": doc.credit_to,
                 "total_taxes_and_charges": inv.get("total_tax"),
                 "invoice_acc_no": inv.get("invoice_acc_no"),
-                "set_warehouse": doc.purchase_warehouse
+                # "set_warehouse": doc.purchase_warehouse,
+                "update_stock": 0,
+                "currency": inv.get("currency")
             })
-          
+
+            for acc in doc.accounts_setting:
+                if acc.currency == inv.get("currency"):
+                    pi.currency = acc.currency
+                    pi.buying_price_list = acc.price_list
+                    pi.credit_to = acc.credit_to
+
+            print(pi.credit_to, pi.buying_price_list, pi.currency, "Check Curerncy and accounts \n\n\n\n")
             if doc.company:
                 pi.company = doc.company
 
@@ -185,7 +191,7 @@ def insert_pr_invoices_from_complis(doc, invoices):
 
             if float(i.get("item_qty")) < 0 or i.get("item_qty") == "Yes":
                 pi.is_return = 1
-                pi.naming_series = doc.sales_return_series
+                pi.naming_series = doc.purchase_return_series
                 return_pr_invoices = frappe.get_all("Purchase Invoice", filters={
                     "bill_no": inv.get("return_against")
                 })
@@ -193,28 +199,17 @@ def insert_pr_invoices_from_complis(doc, invoices):
                 if len(return_pr_invoices) > 0:
                     pi.return_against = return_pr_invoices[0].name
             else:
-                pi.naming_series = doc.sales_invoice_series
-            # print(pi.posting_date, pi.due_date, pi.bill_no, "\n\n\n\n\n\n")
+                pi.naming_series = doc.purchase_invoice_series
             pi.set_missing_values()
             pi.insert(ignore_permissions=True)
             for attac in inv.get("attachments"):
                 link = attac.get("download_link")
-                print(link, inv.get("supplier_code"), "check Link \n\n\n\n\n\n\n")
                 if link:
                     name = link.split("/")
                     file_name = name[len(name) - 1]
 
                     # Save the file
                     file_url = save_url(link, file_name, pi.doctype, pi.name, "Home/Attachments", 0)
-                    print(file_url, "check Name")
-                # Add the file to the document
-            #     pi.append('attachments', {
-            #         'file_url': file_url,
-            #         'file_name': file_name
-            #     })
-
-            #     # Save the document
-            # pi.save()
 
 
     if inv:
@@ -236,13 +231,13 @@ def get_invoices_from_complis(site, synced_date, to_date):
     HashCode = myHMACSHA256.digest()
     hash = ''.join('{:02x}'.format(b) for b in HashCode)
     calculatedSecret = hash.upper()
-
     data = {
         "date_from": str(fromdate),
         "date_to": str(to_date.strftime("%Y-%m-%-dT%H:%M:%S.%f")[:-3] + 'Z'),
         "key": calculatedSecret
     }
-    print(data, "My data List \n\n\n\n\n\n\n\n")
+
+    # print(data, "My data List")
 
     try:
         r = requests.post(site.complis_site_url, json=data).json()
@@ -253,10 +248,34 @@ def get_invoices_from_complis(site, synced_date, to_date):
                 "Something went wrong during the people sync. Click on {0} to generate a new one."
             ).format(button_label)
         )
-    
+
     invoices = r.get("data")
-    filtered_invoices = filter_invoices(invoices)
-    last_invoice = insert_invoices_from_complis(filtered_invoices, site)
+    itrableInvoices = {}
+
+    if invoices != None:
+        for invoice in invoices:
+            invoice_no = invoice['invoice_no']
+            items = invoice['Item_List']
+            unique_objects = []
+            seen_srnos = set()
+            if any(item['item_qty'] == 0 for item in items):
+                continue
+
+            if invoice_no in itrableInvoices:
+                itrableInvoices[invoice_no]['Item_List'].extend(
+                    items)  # Assign unique_objects to Item_List
+            else:
+                itrableInvoices[invoice_no] = invoice
+
+            for obj in itrableInvoices[invoice_no]['Item_List']:
+                sr_no = obj['sr_no']
+                if sr_no not in seen_srnos:
+                    unique_objects.append(obj)
+                    seen_srnos.add(sr_no)
+            itrableInvoices[invoice_no]['Item_List'] = unique_objects
+
+        result = list(itrableInvoices.values())
+        last_invoice = insert_invoices_from_complis(result, site)
 
     frappe.msgprint(
         msg=_(
@@ -264,7 +283,6 @@ def get_invoices_from_complis(site, synced_date, to_date):
             "</b>: Invoices synced successfully!"
         )
     )
-
 
 def insert_invoices_from_complis(invoices, site):
     for c_inv in invoices:
@@ -290,7 +308,6 @@ def insert_invoices_from_complis(invoices, site):
                 get_erp_items(items, site)
 
             sales_tax_template = site.sales_tax_template or get_default_tax_template()
-            
             si = frappe.get_doc({
                 "doctype": "Sales Invoice",
                 "customer": erp_customer,
@@ -323,16 +340,16 @@ def insert_invoices_from_complis(invoices, site):
                     erp_item = db_items[0]
                     rate = float(i.get("item_price"))
                     si.append("items", {
-                        "item_code": erp_item.naxme,
+                        "item_code": erp_item.name,
                         "complis_item_no": i.get("sr_no"),
                         "purchase_order_no": i.get("customer_order_no"),
                         "rate": round(rate, 2) / int(i.get("item_qty")),
-                        "qty": i.get("item_qty")
+                        "qty": i.get("item_qty"),
+                        # "cost_center": site.cost_center if site.cost_center else ""
                     })
 
             si.is_return = 1 if float(i.get("item_qty")) < 0 else 0
             si.naming_series = site.sales_return_series if si.is_return else site.sales_invoice_series
-
             si.set_missing_values()
             si.insert(ignore_permissions=True)
 
@@ -426,7 +443,7 @@ def get_supplier(doc, code, inv):
             "supplier_name": inv.get("supplier_name_en"),
             "supplier_name_in_arabic": inv.get("supplier_name_ar"),
             "supplier_no": code,
-            "txt_id": inv.get("supplier_vat_no"),
+            "tax_id": inv.get("supplier_vat_no"),
             "supplier_group": doc.supplier_group,
             "supplier_type": doc.supplier_type,
         }).insert(ignore_permissions=True)

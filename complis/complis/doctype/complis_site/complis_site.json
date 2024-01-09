@@ -39,7 +39,9 @@
   "purchase_company",
   "supplier_group",
   "credit_to",
-  "sync_pr_invoices"
+  "sync_pr_invoices",
+  "section_break_1i2wy",
+  "accounts_setting"
  ],
  "fields": [
   {
@@ -132,8 +134,7 @@
    "label": "Sales Return Series",
    "no_copy": 1,
    "print_hide": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "reqd": 1
   },
   {
    "fieldname": "company",
@@ -147,8 +148,7 @@
    "label": "Sales Invoice Series",
    "no_copy": 1,
    "print_hide": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "reqd": 1
   },
   {
    "default": "Today",
@@ -256,11 +256,22 @@
    "fieldname": "sales_invoice_section",
    "fieldtype": "Section Break",
    "label": "Sales Invoice"
+  },
+  {
+   "fieldname": "accounts_setting",
+   "fieldtype": "Table",
+   "label": "Accounts Setting",
+   "options": "Accounts Setting",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1i2wy",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-28 15:51:15.244962",
+ "modified": "2024-01-09 08:46:18.531629",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",
