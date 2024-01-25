@@ -7,8 +7,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "sales_invoice_section",
   "enabled",
+  "sales_invoice_section",
   "site_name",
   "complis_site_url",
   "secret_key",
@@ -23,7 +23,6 @@
   "sales_invoice_series",
   "company",
   "sales_tax_template",
-  "sync_status",
   "sync_invoices",
   "purchase_invoice_section",
   "purchase_site_url",
@@ -53,7 +52,8 @@
   {
    "fieldname": "site_name",
    "fieldtype": "Data",
-   "label": "Site Name"
+   "label": "Site Name",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "complis_site_url",
@@ -61,6 +61,7 @@
    "in_list_view": 1,
    "label": "Site Url",
    "length": 500,
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1,
    "unique": 1
   },
@@ -70,6 +71,7 @@
    "in_list_view": 1,
    "label": "Default Customer",
    "options": "Customer",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -77,19 +79,22 @@
    "fieldtype": "Link",
    "label": "Warehouse",
    "options": "Warehouse",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "label": "Cost Center",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "receivable_account",
    "fieldtype": "Link",
    "label": "Receivable Account",
    "options": "Account",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -101,6 +106,7 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Synced till",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -108,23 +114,20 @@
    "fieldtype": "Link",
    "label": "Sales Tax Template",
    "options": "Sales Taxes and Charges Template",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
-  },
-  {
-   "fieldname": "sync_status",
-   "fieldtype": "Long Text",
-   "label": "Sync Status",
-   "read_only": 1
   },
   {
    "fieldname": "sync_invoices",
    "fieldtype": "Button",
-   "label": "Sync Invoices"
+   "label": "Sync Invoices",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "secret_key",
    "fieldtype": "Data",
    "label": "Secret Key",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -134,13 +137,15 @@
    "label": "Sales Return Series",
    "no_copy": 1,
    "print_hide": 1,
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "sales_invoice_series",
@@ -148,6 +153,7 @@
    "label": "Sales Invoice Series",
    "no_copy": 1,
    "print_hide": 1,
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -156,6 +162,7 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Synced to",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -169,12 +176,14 @@
    "fieldname": "pr_secret_key",
    "fieldtype": "Data",
    "label": "Secret Key",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
    "fieldname": "sync_start",
    "fieldtype": "Datetime",
    "label": "Sync Start",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -185,6 +194,7 @@
    "fieldname": "sync_end",
    "fieldtype": "Datetime",
    "label": "Sync End",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -192,6 +202,7 @@
    "fieldname": "purchase_return_series",
    "fieldtype": "Data",
    "label": "Purchase Return Series",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -199,18 +210,21 @@
    "fieldname": "purchase_invoice_series",
    "fieldtype": "Data",
    "label": "Purchase Invoice Series",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
    "fieldname": "purchase_company",
    "fieldtype": "Link",
    "label": "Purchase Company",
-   "options": "Company"
+   "options": "Company",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "sync_pr_invoices",
    "fieldtype": "Button",
-   "label": "Sync Purchase Invoices"
+   "label": "Sync Purchase Invoices",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "purchase_site_url",
@@ -218,6 +232,7 @@
    "in_list_view": 1,
    "label": "Site Url",
    "length": 500,
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1,
    "unique": 1
   },
@@ -225,31 +240,36 @@
    "fieldname": "supplier_group",
    "fieldtype": "Link",
    "label": "Supplier Group",
-   "options": "Supplier Group"
+   "options": "Supplier Group",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "supplier_type",
    "fieldtype": "Select",
    "label": "Supplier Type",
-   "options": "Company\nIndividual"
+   "options": "Company\nIndividual",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "credit_to",
    "fieldtype": "Link",
    "label": "Credit To",
-   "options": "Account"
+   "options": "Account",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "item_group",
    "fieldtype": "Link",
    "label": "Item Group",
-   "options": "Item Group"
+   "options": "Item Group",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "fieldname": "purchase_warehouse",
    "fieldtype": "Link",
    "label": "Purchase Warehouse",
-   "options": "Warehouse"
+   "options": "Warehouse",
+   "read_only_depends_on": "eval:doc.enabled === 0"
   },
   {
    "collapsible": 1,
@@ -262,6 +282,7 @@
    "fieldtype": "Table",
    "label": "Accounts Setting",
    "options": "Accounts Setting",
+   "read_only_depends_on": "eval:doc.enabled === 0",
    "reqd": 1
   },
   {
@@ -271,7 +292,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-09 08:46:18.531629",
+ "modified": "2024-01-25 14:16:40.350296",
  "modified_by": "Administrator",
  "module": "Complis",
  "name": "Complis Site",
