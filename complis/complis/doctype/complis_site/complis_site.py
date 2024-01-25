@@ -112,7 +112,7 @@ def insert_pr_invoices_from_complis(doc, invoices):
         supplier = ""
         pr_invoices = frappe.get_all("Purchase Invoice", filters={
             "bill_no": inv.get("invoice_no"),
-            "supplier_name": inv.get("supplier_name_en")
+            "supplier_number": inv.get("supplier_code")
         })
         # if length is more than 0 then this invoice is already synced with erp
         if (len(pr_invoices) == 0):
