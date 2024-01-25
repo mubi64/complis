@@ -111,7 +111,8 @@ def insert_pr_invoices_from_complis(doc, invoices):
     for inv in invoices:
         supplier = ""
         pr_invoices = frappe.get_all("Purchase Invoice", filters={
-            "bill_no": inv.get("invoice_no")
+            "bill_no": inv.get("invoice_no"),
+            "supplier_name": inv.get("supplier_name_en")
         })
         # if length is more than 0 then this invoice is already synced with erp
         if (len(pr_invoices) == 0):
@@ -489,12 +490,14 @@ def get_pr_items(items, doc):
         items_in_db = frappe.get_all("Item", filters={"name": item_name}, fields=['name'])
         
         if len(items_in_db) == 0:
-            frappe.get_doc({
+            doc_item = frappe.get_doc({
                 "doctype": "Item",
                 "item_code": item_name,
                 "item_name": item_name,
                 "item_group": doc.item_group,
-            }).insert(ignore_permissions=True)
+            })
+            print(doc_item.company, "item_name")
+            doc_item.insert(ignore_permissions=True)
             frappe.db.commit()
 
     return "Success"
