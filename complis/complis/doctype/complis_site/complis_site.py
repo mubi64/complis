@@ -157,7 +157,6 @@ def insert_pr_invoices_from_complis(doc, invoices):
                     pi.buying_price_list = acc.price_list
                     pi.credit_to = acc.credit_to
 
-            print(pi.credit_to, pi.buying_price_list, pi.currency, "Check Curerncy and accounts \n\n\n\n")
             if doc.company:
                 pi.company = doc.company
 
@@ -458,11 +457,12 @@ def get_supplier(doc, code, inv):
 def get_erp_items(items, site):
     for x in items:
         product_id = x.get("item_desc_en").strip()
-        items_in_db = frappe.get_all("Item", filters={"complis_item_code": product_id}, fields=['name'])
+        items_in_db = frappe.get_all("Item", filters={"complis_item_code": product_id})
 
         if len(items_in_db) == 0:
-            if frappe.db.exists("Item", {"name": product_id}):
-                item = frappe.get_doc("Item", product_id)
+            item_name = frappe.db.exists("Item", {"complis_item_code": product_id})
+            if item:
+                item = frappe.get_doc("Item", item_name)
                 if (item.complis_item_code == None):
                     item.complis_item_code = product_id
                     item.save()
@@ -496,7 +496,7 @@ def get_pr_items(items, doc):
                 "item_name": item_name,
                 "item_group": doc.item_group,
             })
-            print(doc_item.company, "item_name")
+
             doc_item.insert(ignore_permissions=True)
             frappe.db.commit()
 
