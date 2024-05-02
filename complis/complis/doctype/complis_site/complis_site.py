@@ -124,8 +124,8 @@ def insert_pr_invoices_from_complis(doc, invoices):
                 get_pr_address(supplier, inv)
 
             if (len(inv.get("Item_List")) > 0):
-                    items = inv.get("Item_List")
-                    get_pr_items(items, doc)
+                items = inv.get("Item_List")
+                get_pr_items(items, doc)
 
             sales_tax_template = doc.sales_tax_template
             # if tax template is not defined in the complis settings then use default one
@@ -166,14 +166,11 @@ def insert_pr_invoices_from_complis(doc, invoices):
 
             rate = 0
             for i in inv.get("Item_List"):
-                db_items = frappe.get_all("Item", filters={
-                    "name": i.get("item_name").strip()
-                }, fields=["name"])
-                if (len(db_items) > 0):
-                    erp_item = db_items[0]
+                db_items = frappe.db.exists("Item", {"complis_item_code": i.get("item_name").strip()})
+                if db_items:
                     rate = float(i.get("item_price"))
                     pi.append("items", {
-                        "item_code": erp_item.name,
+                        "item_code": db_items,
                         "rate": round(rate, 2) / int(i.get("item_qty")),
                         "qty": i.get("item_qty")
                     })
@@ -308,6 +305,7 @@ def insert_invoices_from_complis(invoices, site):
                 get_erp_items(items, site)
 
             sales_tax_template = site.sales_tax_template or get_default_tax_template()
+            print(c_inv.get("invoice_no"), "check \n\n\n\n")
             si = frappe.get_doc({
                 "doctype": "Sales Invoice",
                 "customer": erp_customer,
@@ -335,19 +333,18 @@ def insert_invoices_from_complis(invoices, site):
 
             rate = 0
             for i in c_inv.get("Item_List"):
-                db_items = frappe.get_all("Item", filters={"name": i.get("item_desc_en").strip()}, fields=["name", "purchase_order_no"])
-                if len(db_items) > 0:
-                    erp_item = db_items[0]
+                db_items = frappe.db.exists("Item", {"complis_item_code": i.get("item_desc_en").strip()})
+                if db_items:
                     rate = float(i.get("item_price"))
                     si.append("items", {
-                        "item_code": erp_item.name,
+                        "item_code": db_items,
                         "complis_item_no": i.get("sr_no"),
                         "purchase_order_no": i.get("customer_order_no"),
                         "rate": round(rate, 2) / int(i.get("item_qty")),
                         "qty": i.get("item_qty"),
                         # "cost_center": site.cost_center if site.cost_center else ""
                     })
-
+            
             si.is_return = 1 if float(i.get("item_qty")) < 0 else 0
             si.naming_series = site.sales_return_series if si.is_return else site.sales_invoice_series
             si.set_missing_values()
@@ -461,7 +458,7 @@ def get_erp_items(items, site):
 
         if len(items_in_db) == 0:
             item_name = frappe.db.exists("Item", {"complis_item_code": product_id})
-            if item:
+            if item_name:
                 item = frappe.get_doc("Item", item_name)
                 if (item.complis_item_code == None):
                     item.complis_item_code = product_id
@@ -487,11 +484,12 @@ def get_erp_items(items, site):
 def get_pr_items(items, doc):
     for x in items:
         item_name = x.get("item_name").strip()
-        items_in_db = frappe.get_all("Item", filters={"name": item_name}, fields=['name'])
-        
-        if len(items_in_db) == 0:
+        items_in_db = frappe.db.exists("Item", {"complis_item_code": item_name})
+
+        if not items_in_db:
             doc_item = frappe.get_doc({
                 "doctype": "Item",
+                "complis_item_code": item_name,
                 "item_code": item_name,
                 "item_name": item_name,
                 "item_group": doc.item_group,
@@ -524,4 +522,5 @@ def filter_invoices(invoices):
 
 def get_default_tax_template():
     return frappe.get_value("Sales Taxes and Charges Template", {"is_default": 1})
+
 
